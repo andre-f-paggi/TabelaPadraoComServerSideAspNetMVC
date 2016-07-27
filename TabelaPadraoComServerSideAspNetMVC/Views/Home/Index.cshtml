@@ -1,0 +1,277 @@
+﻿@{
+	Layout = null;
+}
+@model List<TabelaPadraoComServerSideAspNetMVC.Models.EntityTest>
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<title>Tabela Padrão</title>
+	<!-- jQuery -->
+	<script type="text/javascript" src="~/Content/datatables/jQuery-1.12.3/jquery-1.12.3.js"></script>
+	<!-- Bootstrap -->
+	<script type="text/javascript" src="~/Content/datatables/Bootstrap-3.3.6/js/bootstrap.js"></script>
+	<link rel="stylesheet" type="text/css" href="~/Content/datatables/Bootstrap-3.3.6/css/bootstrap.css" />
+	<!-- DataTableJs -->
+	<link rel="stylesheet" type="text/css" href="~/Content/datatables/DataTables-1.10.12/css/dataTables.bootstrap.css" />
+	<link rel="stylesheet" type="text/css" href="~/Content/datatables/Buttons-1.2.1/css/buttons.bootstrap.css" />
+	<link rel="stylesheet" type="text/css" href="~/Content/datatables/ColReorder-1.3.2/css/colReorder.bootstrap.css" />
+	<link rel="stylesheet" type="text/css" href="~/Content/datatables/FixedColumns-3.2.2/css/fixedColumns.bootstrap.css" />
+	<link rel="stylesheet" type="text/css" href="~/Content/datatables/FixedHeader-3.1.2/css/fixedHeader.bootstrap.css" />
+	<link rel="stylesheet" type="text/css" href="~/Content/datatables/Responsive-2.1.0/css/responsive.bootstrap.css" />
+	<link rel="stylesheet" type="text/css" href="~/Content/datatables/RowReorder-1.1.2/css/rowReorder.bootstrap.css" />
+	<link rel="stylesheet" type="text/css" href="~/Content/datatables/Select-1.2.0/css/select.bootstrap.css" />
+	<script type="text/javascript" src="~/Content/datatables/JSZip-2.5.0/jszip.js"></script>
+	<script type="text/javascript" src="~/Content/datatables/pdfmake-0.1.18/build/pdfmake.js"></script>
+	<script type="text/javascript" src="~/Content/datatables/pdfmake-0.1.18/build/vfs_fonts.js"></script>
+	<script type="text/javascript" src="~/Content/datatables/DataTables-1.10.12/js/jquery.dataTables.js"></script>
+	<script type="text/javascript" src="~/Content/datatables/DataTables-1.10.12/js/dataTables.bootstrap.js"></script>
+	<script type="text/javascript" src="~/Content/datatables/Buttons-1.2.1/js/dataTables.buttons.js"></script>
+	<script type="text/javascript" src="~/Content/datatables/Buttons-1.2.1/js/buttons.bootstrap.js"></script>
+	<script type="text/javascript" src="~/Content/datatables/Buttons-1.2.1/js/buttons.colVis.js"></script>
+	<script type="text/javascript" src="~/Content/datatables/Buttons-1.2.1/js/buttons.flash.js"></script>
+	<script type="text/javascript" src="~/Content/datatables/Buttons-1.2.1/js/buttons.html5.js"></script>
+	<script type="text/javascript" src="~/Content/datatables/Buttons-1.2.1/js/buttons.print.js"></script>
+	<script type="text/javascript" src="~/Content/datatables/ColReorder-1.3.2/js/dataTables.colReorder.js"></script>
+	<script type="text/javascript" src="~/Content/datatables/FixedColumns-3.2.2/js/dataTables.fixedColumns.js"></script>
+	<script type="text/javascript" src="~/Content/datatables/FixedHeader-3.1.2/js/dataTables.fixedHeader.js"></script>
+	<script type="text/javascript" src="~/Content/datatables/Responsive-2.1.0/js/dataTables.responsive.js"></script>
+	<script type="text/javascript" src="~/Content/datatables/RowReorder-1.1.2/js/dataTables.rowReorder.js"></script>
+	<script type="text/javascript" src="~/Content/datatables/Select-1.2.0/js/dataTables.select.js"></script>
+	<!-- /DataTableJs -->
+	<style>
+		.datatable-container {
+			width: 800px;
+			margin: 50px auto 0 auto;
+		}
+
+		.table td {
+			white-space: nowrap;
+			overflow: hidden;
+		}
+
+		.datatable-button-list {
+			display: none;
+			position: absolute;
+			z-index: 50;
+			margin-left: -40px;
+			margin-top: 30px;
+			width: 150px;
+		}
+
+			.datatable-button-list.active {
+				display: inline;
+				opacity: 1;
+			}
+
+		.inactive {
+			opacity: 0.5;
+		}
+
+		.datatable-button-list > div {
+			float: none;
+		}
+
+			.datatable-button-list > div > a {
+				width: 100%;
+				display: block;
+			}
+
+		.dt-button-collection {
+			margin-left: 176px;
+			margin-top: -34px;
+		}
+	</style>
+	<script>
+		var json = @Html.Raw(Json.Encode(Model));
+
+		$(document).on("ready", function(){
+			createTable("#myTable", json);
+		});
+
+	//// Testing array
+	//$.getJSON("MOCK_DATA.json", function(json) {
+	//	createTable("#myTable", json);
+	//});
+
+	function createTable(tableSelector, json) {
+		var $table = $(tableSelector);
+		$table.addClass("table");
+
+		$table.append("<thead><tr></tr></thead>");
+		$table.append("<tbody></tbody>");
+		$table.append("<tfoot><tr></tr></tfoot>");
+
+		var $thead = $table.find("thead>tr");
+		var $tbody = $table.find("tbody");
+		var $tfoot = $table.find("tfooter>tr");
+		var columns = [];
+		var doNotShowList = ["first_name"];
+
+		var visible = true;
+		for (var propertyName in json[0]) {
+			visible = true;
+
+			$thead.append("<th>" + propertyName + "</th>");
+			$tfoot.append("<th>" + propertyName + "</th>");
+
+			if ($.inArray(propertyName, doNotShowList) > -1)
+				visible = false;
+
+			if (isUrl(json[0][propertyName]))
+				columns.push({
+					data: propertyName,
+					render: urlRenderer,
+					visible: visible
+				});
+			else
+				columns.push({
+					data: propertyName,
+					visible: visible
+				});
+		}
+
+		var dataTable = $table.DataTable({
+
+			// Essential
+			data: json,
+			columns: columns,
+
+			// Libs
+			//colReorder: true,
+			select: true,
+			// fixedHeader: true,
+			// fixedColumns: true,
+			scrollX: true,
+
+			// Buttons
+			// dom: 'Bfrtip',
+			dom: 'frtip'
+		});
+
+		var buttons = new $.fn.dataTable.Buttons(dataTable, {
+			buttons:
+			[
+				{
+					extend: 'colvis',
+					text: 'Colunas',
+					className: "btn-primary",
+					postfixButtons: [{
+						extend: 'colvisRestore',
+						text: 'Restaurar Original',
+						// className: "btn-warning"
+					}, ]
+				},
+				{
+					extend: 'copy',
+					text: '<u>C</u>opiar',
+					key: {
+						key: 'c',
+						altKey: true
+					},
+					// action: function ( e, dt, node, config ) {
+					//     alert( 'Activated!' );
+					//     this.disable(); // disable button
+					// }
+				}, {
+					extend: 'copy',
+					text: 'Copiar - Página Atual',
+					exportOptions: {
+						modifier: {
+							page: 'current'
+						}
+					}
+				},
+				'csv', {
+					extend: 'csv',
+					text: 'CSV - Página Atual',
+					exportOptions: {
+						modifier: {
+							page: 'current'
+						}
+					}
+				},
+				'excel', {
+					extend: 'excel',
+					text: 'Excel - Página Atual',
+					exportOptions: {
+						modifier: {
+							page: 'current'
+						}
+					}
+				},
+				'pdf', {
+					extend: 'pdf',
+					text: 'PDF - Página Atual',
+					exportOptions: {
+						modifier: {
+							page: 'current'
+						}
+					}
+				}, {
+					extend: 'print',
+					text: 'Imprimir'
+				}, {
+					extend: 'print',
+					text: 'Imprimir - Página Atual',
+					exportOptions: {
+						modifier: {
+							page: 'current'
+						}
+					}
+				}
+			]
+	}).container().appendTo($('.datatable-button-list'));
+	}
+
+	$(document).on("click", ".js-show-datatable-menu", function(e) {
+		e.stopPropagation();
+		$(".datatable-button-list").toggleClass("active");
+		$(this).siblings(".datatable-content").toggleClass("inactive");
+	});
+
+	$(document).on("click", function(e) {
+		var $target =$(e.target)
+		if($target.closest(".datatable-button-list").length > 0
+			|| $target.closest("[class*=dt-button]").length > 0)
+		{
+			e.stopPropagation();
+			return;
+		}
+		$(".datatable-button-list").removeClass("active");
+		$(".datatable-content").removeClass("inactive");
+	});
+
+	function getHiddenColumnNames() {
+		var array = [];
+		var notActiveColumns = $(".dt-button-collection > li:not(.active) > a");
+		notActiveColumns.each(function() {
+			array.push(this.innerHTML);
+		});
+		return array;
+	}
+
+	function isUrl(s) {
+		var regexp = /(ftp|http|https):\/\/(\w+:{0,1}\w*@@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@@!\-\/]))?/
+		return regexp.test(s);
+	}
+
+	function urlRenderer(data, type, full, meta) {
+		return '<a href="' + data + '" target="_blank">' + data + '</a>';
+	}
+	</script>
+</head>
+
+<body>
+	<div class="datatable-container">
+		<button class="js-show-datatable-menu">Menu</button>
+		<div class="datatable-button-list"></div>
+		<div class="datatable-content">
+			<table id="myTable"></table>
+		</div>
+	</div>
+</body>
+
+</html>
